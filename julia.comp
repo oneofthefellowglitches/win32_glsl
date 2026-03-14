@@ -1,0 +1,22 @@
+#version 450
+layout(local_size_x = 16, local_size_y = 16) in;
+layout(binding = 0) buffer OutBuf { uint pixels[]; };
+layout(push_constant) uniform Push { int w; int h; float time; } p;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x, y = gl_GlobalInvocationID.y;
+    if (x >= p.w || y >= p.h) return;
+    
+    // Animacja stałej C na podstawie czasu
+    float cx = 0.355 + 0.1 * sin(p.time);
+    float cy = 0.355 + 0.1 * cos(p.time);
+    
+    float zx = 1.5 * (x - p.w/2.0) / (0.5 * p.w);
+    float zy = (y - p.h/2.0) / (0.5 * p.h);
+    int i = 0;
+    while(zx*zx + zy*zy < 4.0 && i < 255) {
+        float t = zx*zx - zy*zy + cx;
+        zy = 2.0*zx*zy + cy; zx = t; i++;
+    }
+    pixels[y * p.w + x] = (0xFF << 24) | (i << 16) | (i << 8) | i;
+}
